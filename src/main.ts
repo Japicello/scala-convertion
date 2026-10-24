@@ -17,6 +17,17 @@ async function bootstrap() {
     }),
   );
 
+  // HTTP Request Logger for Render and local live console audit
+  app.use((req: any, res: any, next: () => void) => {
+    const start = Date.now();
+    res.on('finish', () => {
+      logger.log(
+        `📥 [${req.method}] ${req.originalUrl} - HTTP ${res.statusCode} (${Date.now() - start}ms)`,
+      );
+    });
+    next();
+  });
+
   // Enable CORS for mobile apps, emulators, and external origins
   app.enableCors({
     origin: '*',
@@ -80,7 +91,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   const port = process.env.PORT ?? 3000;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   logger.log(`🚀 ScalaDocs API running on: http://localhost:${port}`);
   logger.log(`📚 Swagger UI documentation available at: http://localhost:${port}/docs`);
