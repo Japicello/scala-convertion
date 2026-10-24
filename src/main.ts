@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
@@ -30,23 +30,47 @@ async function bootstrap() {
     exclude: ['health', '', 'docs', 'docs-json'],
   });
 
+  // Global DTO Validation Pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+      forbidUnknownValues: false,
+    }),
+  );
+
   // Global Exception Filter for predictable JSON errors
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Setup OpenAPI / Swagger documentation
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('File Converter API')
+    .setTitle('ScalaDocs Enterprise Document Engine API')
     .setDescription(
-      'API REST de conversión de imágenes y documentos a PDF orientada a aplicaciones móviles. Diseñada con principios SOLID, validación por Magic Bytes y protección de recursos.',
+      'API REST para servicios de conversión a PDF, escáner OCR, Kardex Valorado oficial (SUNAT 13.1 / NIIF 2), Kardex de enfermería, autenticación corporativa JWT y sistema de donaciones.',
     )
-    .setVersion('1.0.0')
+    .setVersion('4.2.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Introduce el token JWT obtenido en /auth/login o /auth/register',
+      },
+      'bearer',
+    )
+    .addTag('Autenticación', 'Registro, inicio de sesión corporativo y perfil de usuario')
+    .addTag('Kardex de Inventario & Formatos', 'Cálculo de Kardex Valorado (Promedio, PEPS, UEPS) y exportación oficial a PDF')
+    .addTag('Kardex de Enfermería', 'Diagnóstico PAE, ficha clínica y exportación oficial de Kárdex para Venezuela')
     .addTag('Conversions', 'Conversión segura de archivos a PDF')
+    .addTag('Documentos e Historial', 'Historial reciente de documentos y métricas del motor')
+    .addTag('Donaciones', 'Canales y niveles de apoyo para el mantenimiento de ScalaDocs')
     .addTag('Health', 'Estado del sistema y monitoreo')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document, {
-    customSiteTitle: 'File Converter API Docs',
+    customSiteTitle: 'ScalaDocs API Docs',
     swaggerOptions: {
       persistAuthorization: true,
     },
@@ -58,7 +82,7 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
 
-  logger.log(`🚀 File Converter API running on: http://localhost:${port}`);
+  logger.log(`🚀 ScalaDocs API running on: http://localhost:${port}`);
   logger.log(`📚 Swagger UI documentation available at: http://localhost:${port}/docs`);
   logger.log(`📋 Health check available at: http://localhost:${port}/health`);
   logger.log(`📄 Convert endpoint at: http://localhost:${port}/api/v1/converter/to-pdf`);

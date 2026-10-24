@@ -41,6 +41,7 @@ COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
+RUN mkdir -p /app/data
 
 EXPOSE 3000
 CMD ["node", "dist/main"]
